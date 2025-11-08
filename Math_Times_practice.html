@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Multiplication Accuracy Challenge – Kru Pai Classroom</title>
+<style>
+  :root{
+    --bg1:#e6f1ff; --bg2:#fff9db; /* blue → yellow */
+    --card:#ffffff; --ink:#0f172a; --muted:#64748b;
+    --brand:#2563eb; /* blue */
+    --accent:#fbbf24; /* amber/yellow */
+    --ok:#16a34a; --warn:#ef4444;
+    --ring:#1d4ed8; --ring2:#fde68a;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0; font-family:'Noto Sans Thai', system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:linear-gradient(180deg,var(--bg1),var(--bg2)); color:var(--ink); display:flex; align-items:center; justify-content:center; padding:16px}
+  .app{width:min(1000px,100%)}
+  .card{background:var(--card); border-radius:24px; box-shadow:0 14px 30px rgba(2,6,23,.12); overflow:hidden}
+  header{padding:18px 20px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; color:#0b1220; background:linear-gradient(90deg,#e0f2ff,#fff3b0)}
+  .brand{display:flex; align-items:center; gap:12px}
+  .logo{width:44px; height:44px; border-radius:12px; background:conic-gradient(from 0deg at 50% 50%, #2563eb, #93c5fd, #f59e0b, #fde68a, #2563eb); display:grid; place-items:center; color:#fff; font-weight:900}
+  h1{margin:0; font-size:clamp(18px,2.6vw,26px); font-weight:900}
+  .pill{display:inline-flex; align-items:center; gap:8px; background:#ffffff; border:1px dashed #e2e8f0; padding:6px 10px; border-radius:999px}
+  .sub{font-size:12px; opacity:.85}
+  .screen{padding:22px}
+  .hidden{display:none}
+
+  /* Blue/Yellow cute bubbles */
+  .eqWrap{display:inline-flex; align-items:center; gap:14px; flex-wrap:wrap}
+  .numBubble{display:inline-flex; align-items:center; justify-content:center; width:clamp(62px,12vw,96px); height:clamp(62px,12vw,96px); border-radius:50%; background:var(--ring2); border:6px solid var(--ring); box-shadow:0 8px 20px rgba(37,99,235,.18); font-size:clamp(32px,7.5vw,48px); font-weight:1000; color:#0f172a; animation:bob 2.2s ease-in-out infinite alternate}
+  .op{font-size:clamp(28px,6.5vw,40px); color:#0f172a}
+  @keyframes bob{0%{transform:translateY(0)}100%{transform:translateY(-6px)}}
+
+  .row{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+  .equation{position:relative; background:#f8fafc; border:2px solid #e2e8f0; border-radius:22px; padding:26px 20px 40px}
+  .inputWrap{margin-top:18px; display:flex; align-items:center; gap:8px; justify-content:center}
+  .inputAns{width:min(200px,55vw); font-size:clamp(26px,6vw,38px); text-align:center; font-weight:900; padding:10px 12px; border-radius:14px; border:3px solid #bfdbfe; outline:none; box-shadow:0 6px 10px rgba(0,0,0,.05)}
+  .inputAns:focus{border-color:var(--ring)}
+  .tick{position:absolute; right:16px; top:12px; font-size:40px; color:var(--ok); opacity:0; transform:scale(.6) translateY(8px)}
+  .tick.show{animation:tickPop .6s ease forwards}
+  @keyframes tickPop{0%{opacity:0; transform:scale(.6) translateY(8px)}40%{opacity:1; transform:scale(1.1) translateY(-4px)}100%{opacity:1; transform:scale(1) translateY(0)}}
+
+  .flash-correct{animation:flashOK .45s ease}
+  .flash-wrong{animation:flashBAD .45s ease}
+  @keyframes flashOK{0%{background:#ecfdf5}100%{background:transparent}}
+  @keyframes flashBAD{0%{background:#fee2e2}100%{background:transparent}}
+
+  /* Set grid */
+  .grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:12px}
+  .setBtn{type:button; background:#ffffff; border:2px solid #bfdbfe; border-radius:16px; padding:14px 12px; font-weight:900; cursor:pointer; transition:.2s transform, .2s box-shadow; text-align:left}
+  .setBtn:hover{transform:translateY(-2px); box-shadow:0 10px 18px rgba(37,99,235,.18)}
+  .setTitle{font-size:18px}
+  .setMeta{display:flex; align-items:center; justify-content:space-between; margin-top:6px}
+  .badge{display:inline-flex; align-items:center; gap:6px; background:var(--accent); color:#111827; border-radius:999px; padding:3px 8px; font-size:12px; font-weight:800}
+
+  .btn{border:none; cursor:pointer; padding:12px 16px; border-radius:14px; font-weight:800; background:#fde68a; color:#1f2937; border:2px solid #fcd34d; transition:.2s transform}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{background:#2563eb; color:#fff; border-color:#1d4ed8}
+  .btn.warn{background:#fee2e2; border-color:#fecaca; color:#991b1b}
+  .btn.neutral{background:#e2e8f0; border-color:#cbd5e1; color:#0f172a}
+
+  .confetti{position:fixed; inset:0; pointer-events:none; overflow:hidden}
+  .confetti i{position:absolute; width:10px; height:16px; opacity:.9; border-radius:3px; will-change:transform}
+
+  @media (prefers-reduced-motion: reduce){ .numBubble{animation:none} }
+</style>
+</head>
+<body>
+<div class="app card" id="app">
+  <header>
+    <div class="brand">
+      <div class="logo">×</div>
+      <div>
+        <h1>Multiplication Accuracy Challenge – ชุดทดสอบความแม่น</h1>
+        <div class="sub">ธีม น้ำเงิน–เหลือง · 20 ชุด ชุดละ 20 ข้อ · จับเวลา 60 วินาที</div>
+      </div>
+    </div>
+    <div class="pill"><strong>ผู้เล่น:</strong> <span id="playerNameDisp">ยังไม่ตั้งชื่อ</span></div>
+  </header>
+
+  <!-- Start / Welcome -->
+  <section class="screen" id="startScreen">
+    <div style="display:grid; gap:14px; justify-items:center; text-align:center">
+      <div style="font-weight:900; font-size:26px; color:var(--brand)">ยินดีต้อนรับสู่โหมดทดสอบความแม่น ✨</div>
+      <div>ใส่ <strong>ชื่อผู้เล่น</strong> เพื่อเริ่มเล่น</div>
+      <div class="row" style="justify-content:center">
+        <input id="nameInput" class="inputAns" type="text" maxlength="20" placeholder="เช่น: น้องต้นน้ำ" style="width:min(260px,80vw)" />
+        <button id="btnStart" class="btn primary" type="button">เริ่มเล่น</button>
+      </div>
+      <div class="sub">ระบบจะจำชื่อไว้ในเครื่องของหนูนะ</div>
+    </div>
+  </section>
+
+  <section class="screen hidden" id="welcomeScreen">
+    <div style="text-align:center; display:grid; gap:10px; justify-items:center">
+      <div style="font-size:24px; font-weight:900; color:#1d4ed8">ยินดีต้อนรับ <span id="welcomeName">น้อง</span> สู่โลกแห่งสูตรคูณอีกครั้ง 🌟</div>
+      <div class="sub">ถ้าพร้อมแล้ว… ไปต่อกันเลย!</div>
+      <div class="row" style="justify-content:center; gap:8px">
+        <button id="btnToSets" class="btn primary" type="button">ไปเลือกชุดทดสอบ</button>
+        <button id="btnChangeName" class="btn neutral" type="button">เปลี่ยนชื่อ</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Set selection -->
+  <section class="screen hidden" id="setScreen">
+    <div class="row" style="justify-content:space-between; margin-bottom:10px">
+      <div class="pill">สถานะชุด: <strong id="summaryText">ยังไม่เริ่ม</strong></div>
+      <div class="row" style="gap:8px">
+        <button id="btnResetAll" class="btn warn" type="button">ล้างสถิติทั้งหมด</button>
+      </div>
+    </div>
+    <p style="margin-top:0">เลือก <strong>ชุดทดสอบ</strong> (20 ชุด ชุดละ 20 ข้อ สุ่มจากแม่ 2–12 ทั้งหมด) — เวลาชุดละ <strong>60 วินาที</strong></p>
+    <div class="grid" id="setGrid"></div>
+  </section>
+
+  <!-- Test play -->
+  <section class="screen hidden" id="playScreen">
+    <div class="row" style="justify-content:space-between; margin-bottom:12px">
+      <div class="pill">กำลังเล่น: <strong>ชุดที่ <span id="setNow"></span></strong></div>
+      <div class="row" style="gap:8px; align-items:center">
+        <div class="pill">ข้อ: <strong><span id="qIndex">1</span>/20</strong></div>
+        <div class="pill">ถูก: <strong><span id="correctCount">0</span></strong></div>
+        <div class="pill">ผิด: <strong><span id="wrongCount">0</span></strong></div>
+        <div class="pill" id="timerPill">⏱️ เหลือเวลา: <strong><span id="timeLeft">60</span>s</strong></div>
+      </div>
+    </div>
+
+    <div class="equation center" id="eqBox">
+      <div id="eqText" style="font-weight:900"><span class="eqWrap"><span class="numBubble">2</span> <span class="op">×</span> <span class="numBubble">1</span> <span class="op">=</span></span></div>
+      <div class="tick" id="tick">✔</div>
+      <form id="answerForm" class="center inputWrap" autocomplete="off">
+        <input id="answer" class="inputAns" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="พิมพ์ผลคูณ" required />
+        <button id="submitBtn" class="btn primary" type="submit">ตรวจคำตอบ</button>
+      </form>
+    </div>
+
+    <div class="row" style="justify-content:space-between; margin-top:14px">
+      <div class="toolbar">
+        <button class="btn neutral" id="btnBackSets" type="button">กลับเลือกชุด</button>
+        <button class="btn warn" id="btnStop" type="button">หยุด</button>
+        <button class="btn" id="btnRestart" type="button">เริ่มชุดนี้ใหม่</button>
+      </div>
+      <div class="sub">โหมดความแม่น: ตอบผิด **ไม่นับถูก** และไปข้อถัดไปทันที</div>
+    </div>
+  </section>
+
+  <!-- Result -->
+  <section class="screen hidden center" id="resultScreen">
+    <div style="text-align:center">
+      <div style="font-size:28px; font-weight:900; color:#1d4ed8">สรุปผลชุดที่ <span id="resSet"></span></div>
+      <div style="margin-top:6px">ถูก: <strong id="resCorrect">0</strong> | ผิด: <strong id="resWrong">0</strong> | ทำไปทั้งหมด: <strong id="resDone">0</strong></div>
+      <div style="margin-top:6px">ความแม่นยำ: <strong id="resAcc">0%</strong> | เวลาคงเหลือ: <strong id="resTime">0</strong>s</div>
+      <div class="row" style="justify-content:center; gap:10px; margin-top:12px">
+        <button id="btnRetrySet" class="btn primary" type="button">เล่นชุดนี้อีกครั้ง</button>
+        <button id="btnChooseAnother" class="btn" type="button">เลือกชุดอื่น</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="confetti" id="confetti"></div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  // Elements
+  const start = document.getElementById('startScreen');
+  const welcome = document.getElementById('welcomeScreen');
+  const setScreen = document.getElementById('setScreen');
+  const playScreen = document.getElementById('playScreen');
+  const resultScreen = document.getElementById('resultScreen');
+  const setGrid = document.getElementById('setGrid');
+  const summaryText = document.getElementById('summaryText');
+
+  const nameInput = document.getElementById('nameInput');
+  const btnStart = document.getElementById('btnStart');
+  const btnToSets = document.getElementById('btnToSets');
+  const btnChangeName = document.getElementById('btnChangeName');
+  const btnResetAll = document.getElementById('btnResetAll');
+
+  const playerNameDisp = document.getElementById('playerNameDisp');
+  const welcomeName = document.getElementById('welcomeName');
+
+  const setNow = document.getElementById('setNow');
+  const qIndex = document.getElementById('qIndex');
+  const correctCountEl = document.getElementById('correctCount');
+  const wrongCountEl = document.getElementById('wrongCount');
+  const timeLeftEl = document.getElementById('timeLeft');
+  const timerPill = document.getElementById('timerPill');
+
+  const eqText = document.getElementById('eqText');
+  const eqBox = document.getElementById('eqBox');
+  const tick = document.getElementById('tick');
+  const answerForm = document.getElementById('answerForm');
+  const answer = document.getElementById('answer');
+
+  const btnBackSets = document.getElementById('btnBackSets');
+  const btnStop = document.getElementById('btnStop');
+  const btnRestart = document.getElementById('btnRestart');
+
+  const resSet = document.getElementById('resSet');
+  const resCorrect = document.getElementById('resCorrect');
+  const resWrong = document.getElementById('resWrong');
+  const resDone = document.getElementById('resDone');
+  const resAcc = document.getElementById('resAcc');
+  const resTime = document.getElementById('resTime');
+  const btnRetrySet = document.getElementById('btnRetrySet');
+  const btnChooseAnother = document.getElementById('btnChooseAnother');
+
+  const confetti = document.getElementById('confetti');
+
+  // State
+  const LS_NAME = 'kru_pai_acc_name_v1';
+  const LS_SCORES = 'kru_pai_acc_scores_v1'; // { set1:{best:.., last:..}, ... }
+  let scores = loadScores();
+
+  let currentSet = 1;
+  let problems = []; // [{a,b,ans}]
+  let idx = 0; // 0..19
+  let correct = 0, wrong = 0;
+  let timer = null; let timeLeft = 60; // seconds
+
+  init();
+
+  function init(){
+    const saved = (localStorage.getItem(LS_NAME)||'').trim();
+    if(saved){
+      playerNameDisp.textContent = saved;
+      welcomeName.textContent = saved.startsWith('น้อง') ? saved : ('น้อง '+saved);
+      switchScreen('welcome');
+    }else{
+      switchScreen('start');
+    }
+    renderSetGrid();
+    updateSummary();
+  }
+
+  function updateSummary(){
+    const done = Object.keys(scores).length;
+    const bestTotal = Object.values(scores).reduce((s,v)=> s + (v.best||0), 0);
+    summaryText.textContent = done ? `บันทึกคะแนนแล้ว ${done} ชุด · คะแนนรวมสะสม ${bestTotal}` : 'ยังไม่เริ่ม';
+  }
+
+  function switchScreen(name){
+    [start, welcome, setScreen, playScreen, resultScreen].forEach(s=>s.classList.add('hidden'));
+    if(name==='start') start.classList.remove('hidden');
+    if(name==='welcome') welcome.classList.remove('hidden');
+    if(name==='sets') setScreen.classList.remove('hidden');
+    if(name==='play') playScreen.classList.remove('hidden');
+    if(name==='result') resultScreen.classList.remove('hidden');
+    stopTimer();
+  }
+
+  // Name flow
+  btnStart.addEventListener('click', saveNameAndGo);
+  nameInput.addEventListener('keydown', e=>{ if(e.key==='Enter') saveNameAndGo(); });
+  function saveNameAndGo(){
+    let nm = (nameInput.value||'').trim(); if(!nm) nm='นักเรียน';
+    localStorage.setItem(LS_NAME, nm);
+    playerNameDisp.textContent = nm;
+    welcomeName.textContent = nm.startsWith('น้อง') ? nm : ('น้อง '+nm);
+    switchScreen('welcome');
+  }
+  btnToSets.addEventListener('click', ()=> switchScreen('sets'));
+  btnChangeName.addEventListener('click', ()=>{ localStorage.removeItem(LS_NAME); playerNameDisp.textContent='ยังไม่ตั้งชื่อ'; switchScreen('start'); });
+
+  // Set grid
+  function renderSetGrid(){
+    setGrid.innerHTML='';
+    for(let s=1; s<=20; s++){
+      const btn = document.createElement('button');
+      btn.type='button'; btn.className='setBtn';
+      const sc = scores[s]||{};
+      const best = sc.best!=null ? sc.best : '-';
+      const badge = (best===20) ? '<span class="badge">⭐ 20/20</span>' : `<span class="sub">ดีที่สุด: <strong>${best}</strong>/20</span>`;
+      btn.innerHTML = `
+        <div class="setTitle">ชุดที่ ${s}</div>
+        <div class="setMeta">
+          <div>${badge}</div>
+          <div class="sub">60s</div>
+        </div>
+      `;
+      btn.addEventListener('click', ()=> startSet(s));
+      setGrid.appendChild(btn);
+    }
+  }
+
+  // Play a set
+  function startSet(s){
+    currentSet = s; idx=0; correct=0; wrong=0; timeLeft=60;
+    problems = makeProblems(20);
+    document.getElementById('setNow').textContent = s;
+    qIndex.textContent = 1; correctCountEl.textContent = '0'; wrongCountEl.textContent = '0';
+    timeLeftEl.textContent = timeLeft;
+    updateEquation();
+    switchScreen('play');
+    setTimeout(()=>answer.focus(), 80);
+    startTimer();
+  }
+
+  function makeProblems(n){
+    // build all pairs 2..12 × 1..12 → shuffle → take n (no repeat inside a set)
+    const pool=[]; for(let a=2;a<=12;a++){ for(let b=1;b<=12;b++){ pool.push({a,b,ans:a*b}); }}
+    for(let i=pool.length-1;i>0;i--){ const j=(Math.random()* (i+1))|0; [pool[i],pool[j]]=[pool[j],pool[i]]; }
+    return pool.slice(0,n);
+  }
+
+  function updateEquation(){
+    const p = problems[idx];
+    eqText.innerHTML = `<span class=\"eqWrap\">
+      <span class=\"numBubble\">${p.a}</span>
+      <span class=\"op\">×</span>
+      <span class=\"numBubble\">${p.b}</span>
+      <span class=\"op\">=</span>
+    </span>`;
+    answer.value='';
+  }
+
+  // Timer
+  function startTimer(){ stopTimer(); timer=setInterval(()=>{ timeLeft--; timeLeftEl.textContent=timeLeft; if(timeLeft<=0){ finishSet(); } },1000); }
+  function stopTimer(){ if(timer){ clearInterval(timer); timer=null; } }
+
+  // Answering
+  answerForm.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const p=problems[idx]; const val = Number((answer.value||'').trim());
+    if(val===p.ans){
+      flash(true);
+      tick.classList.remove('show'); void tick.offsetWidth; tick.classList.add('show');
+      correct++;
+      correctCountEl.textContent = String(correct);
+    }else{
+      flash(false);
+      wrong++; wrongCountEl.textContent = String(wrong);
+    }
+    idx++;
+    if(idx>=problems.length){ finishSet(); }
+    else { qIndex.textContent = String(idx+1); setTimeout(updateEquation, 160); }
+  });
+
+  function flash(ok){
+    eqBox.classList.remove('flash-correct','flash-wrong');
+    void eqBox.offsetWidth; eqBox.classList.add(ok? 'flash-correct' : 'flash-wrong');
+  }
+
+  // Controls
+  document.getElementById('btnBackSets').addEventListener('click', ()=>{ switchScreen('sets'); });
+  document.getElementById('btnStop').addEventListener('click', finishSet);
+  document.getElementById('btnRestart').addEventListener('click', ()=> startSet(currentSet));
+
+  // Finish & Result
+  function finishSet(){
+    stopTimer();
+    const done = Math.min(idx, problems.length); // answered count
+    const acc = done>0 ? Math.round((correct/done)*100) : 0;
+    resSet.textContent = currentSet; resCorrect.textContent = correct; resWrong.textContent = wrong; resDone.textContent = done; resAcc.textContent = acc+'%'; resTime.textContent = timeLeft;
+
+    // Save best score
+    const prev = scores[currentSet]?.best || 0;
+    const best = Math.max(prev, correct);
+    scores[currentSet] = { best, last: correct, timeLeft };
+    localStorage.setItem(LS_SCORES, JSON.stringify(scores));
+
+    // Celebrate if perfect
+    if(correct===20 && timeLeft>0) fireConfetti();
+
+    switchScreen('result');
+    renderSetGrid();
+    updateSummary();
+  }
+
+  btnRetrySet.addEventListener('click', ()=> startSet(currentSet));
+  btnChooseAnother.addEventListener('click', ()=> switchScreen('sets'));
+
+  // Scores storage
+  function loadScores(){ try{ return JSON.parse(localStorage.getItem(LS_SCORES)||'{}'); }catch(e){ return {}; } }
+
+  // Confetti
+  function fireConfetti(){
+    confetti.innerHTML = '';
+    const colors = ['#93c5fd','#2563eb','#fde68a','#f59e0b'];
+    const count = 140, W = innerWidth, H = innerHeight;
+    for(let i=0;i<count;i++){
+      const el=document.createElement('i');
+      el.style.left = Math.random()*W + 'px';
+      el.style.top = '-20px';
+      el.style.background = colors[(Math.random()*colors.length)|0];
+      const rot = Math.random()*360, size = 6+Math.random()*10; el.style.width=size+'px'; el.style.height=(size*1.4)+'px';
+      const fall = H + Math.random()*H*.4, drift = (Math.random()*200-100), dur=1800+Math.random()*1200;
+      el.animate([
+        { transform:`translate(0,0) rotate(${rot}deg)`, opacity:1 },
+        { transform:`translate(${drift}px, ${fall}px) rotate(${rot+360}deg)`, opacity:.95 }
+      ],{ duration:dur, easing:'cubic-bezier(.2,.7,.2,1)', fill:'forwards' });
+      confetti.appendChild(el);
+    }
+    setTimeout(()=>confetti.innerHTML='', 2600);
+  }
+})();
+</script>
+</body>
+</html>
